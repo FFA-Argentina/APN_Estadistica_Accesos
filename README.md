@@ -10,8 +10,11 @@ Período: **agosto 2023 a julio 2026** · 11 dependencias.
 - **Ingresos netos de comisiones**: el monto que efectivamente queda para la administración. Es el indicador principal del tablero.
 - **Comisiones a Tercerizadoras**: la porción del cobro que retienen los agentes de venta. Netos + comisiones = ingreso percibido.
 - **Ingresos teóricos**: los días de visita valuados a la tarifa filtro de residente nacional de un día vigente en cada dependencia y período.
+- **Canal de venta**: online o presencial, con su participación mensual y el margen que deja cada canal.
 
-Controles: selector de dependencia; categorías de visitante (residentes, no residentes, vehículos y adicionales) combinables y acumulables; series de ingresos seleccionables; modo *acumuladas* o *superpuestas*; tarjetas por dependencia con la métrica elegida; y descarga del CSV de la vista activa.
+Controles: selector de dependencia; categorías de visitante (residentes, no residentes, vehículos y adicionales) combinables y acumulables; canal de venta (online, presencial); selector *Abrir por* para elegir si los gráficos se abren por categoría o por canal; series de ingresos seleccionables; modo *acumuladas* o *superpuestas*; tarjetas por dependencia con la métrica elegida; y descarga del CSV de la vista activa.
+
+Incluye dos tablas de comparación interanual sobre los ciclos ago–jul —resumen general y apertura por dependencia—, ambas con la columna de participación online.
 
 Las líneas verticales punteadas marcan los cambios de tarifa filtro (P2 a P6).
 
