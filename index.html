@@ -139,6 +139,30 @@
     padding-top:10px;border-top:1px solid var(--line)}
   .valsbar .seg{border-color:var(--line)}
   .valsbar .seg button{font-size:12px;padding:6px 12px;border-right-color:var(--line)}
+  .tablebox{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;margin:0 -2px}
+  table.yoy{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:13px;
+    min-width:560px}
+  table.yoy th,table.yoy td{padding:7px 10px;text-align:right;white-space:nowrap;
+    border-bottom:1px solid var(--line)}
+  table.yoy thead th{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    font-weight:700;vertical-align:bottom;border-bottom:1.5px solid var(--ink);padding-bottom:6px}
+  table.yoy thead th span{display:block;font-size:9.5px;letter-spacing:.06em;text-transform:none;
+    font-weight:500;opacity:.8;margin-top:2px}
+  table.yoy .lbl{text-align:left;font-weight:500;position:sticky;left:0;background:var(--paper-2);z-index:1}
+  table.yoy tr.hi .lbl{background:#E9E1CE}
+  table.yoy thead .lbl{background:var(--paper-2)}
+  table.yoy thead .lbl{text-align:left}
+  table.yoy tbody tr:last-child td{border-bottom:0}
+  table.yoy tr.hi td{background:#E9E1CE;font-weight:600}
+  table.yoy tr.ratio{color:var(--muted)}
+  table.yoy tr.ratio td{font-style:italic}
+  table.yoy tr.ratio td.lbl{font-style:normal}
+  table.yoy tbody tr:first-child.ratio td,table.yoy tr.ratio:first-of-type td{border-top:1.5px solid var(--line)}
+  table.yoy td.v{font-weight:600}
+  table.yoy td.v.pos{color:var(--forest-2)}
+  table.yoy td.v.neg{color:var(--clay)}
+  table.yoy td.v.na{color:var(--muted);font-weight:500;font-style:italic}
+  table.yoy.deps tbody tr:hover td{background:rgba(44,74,52,.06)}
   .chartbox{position:relative;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
     overscroll-behavior-x:contain;scrollbar-width:thin}
   .chartbox svg{display:block;max-width:none}
@@ -197,6 +221,11 @@
     .card:active{border-color:var(--forest)}
     .seg button:hover:not([aria-pressed="true"]):not([disabled]){background:transparent}
     .ghost:hover{background:var(--paper);color:var(--forest);border-color:var(--line)}
+  }
+  @media (max-width:640px){
+    .tablebox{position:relative}
+    .tablebox::after{content:"Deslizá la tabla para ver las variaciones";display:block;position:sticky;left:0;
+      font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:6px 0 2px}
   }
   @media (max-width:520px){
     .cards{grid-template-columns:1fr}
@@ -259,6 +288,16 @@
   <section class="panel">
     <div class="phead">
       <div>
+        <h2>Comparación interanual</h2>
+        <p id="yoynote"></p>
+      </div>
+    </div>
+    <div class="tablebox" id="yoy"></div>
+  </section>
+
+  <section class="panel">
+    <div class="phead">
+      <div>
         <h2>Tickets y días de visita</h2>
         <p id="desc1"></p>
       </div>
@@ -303,6 +342,16 @@
     </div>
   </div>
   <div class="cards" id="cards"></div>
+
+  <section class="panel" style="margin-top:22px">
+    <div class="phead">
+      <div>
+        <h2>Interanual por dependencia</h2>
+        <p>Los tres ciclos ago–jul para la métrica elegida arriba. Cuando el año base tiene menos de 1.000 tickets, o menos de la décima parte del año siguiente, la variación se omite: son altas al sistema de registro, no crecimiento.</p>
+      </div>
+    </div>
+    <div class="tablebox" id="yoydeps"></div>
+  </section>
 
   <footer class="notes">
     <h4>Cómo leer estos números</h4>
@@ -381,6 +430,23 @@ function grab(dep, seg, mi){
 function sum(a){ var t=0; for(var i=0;i<N;i++)t+=a[i]; return t; }
 function addTo(acc,b){ for(var i=0;i<N;i++) acc[i]+=b[i]; return acc; }
 function actives(){ return CATS.filter(function(c){ return S.cats[c.k]; }); }
+
+/* ---------- ciclos ago–jul ---------- */
+var CYC = MESES.map(function(m){ var y=+m.slice(0,4), mm=+m.slice(5,7); return mm>=8 ? y : y-1; });
+var CYCS = CYC.filter(function(v,i,arr){ return arr.indexOf(v)===i; }).sort(function(x,y){ return x-y; });
+function cycLabel(c){ return "ago "+String(c).slice(2)+"–jul "+String(c+1).slice(2); }
+function sumCyc(arr, ci){ var t=0; for(var i=0;i<N;i++) if(CYC[i]===CYCS[ci]) t+=arr[i]; return t; }
+function varCell(cur, base, guard){
+  if(guard) return '<td class="v na">s/base</td>';
+  if(!base) return '<td class="v na">—</td>';
+  var d = cur/base-1;
+  return '<td class="v '+(d<0?"neg":"pos")+'">'+(d>0?"+":"−")+nf1.format(Math.abs(d)*100)+"%</td>";
+}
+function ppCell(cur, base){
+  if(base===null || cur===null) return '<td class="v na">—</td>';
+  var d = (cur-base)*100;
+  return '<td class="v '+(d<0?"neg":"pos")+'">'+(d>0?"+":"−")+nf1.format(Math.abs(d))+" pp</td>";
+}
 function series(dep){
   return actives().map(function(c){
     var o = {k:c.k, label:c.label, short:c.short, color:c.color,
@@ -684,7 +750,76 @@ function render(){
   });
   document.getElementById("leg2").innerHTML = leg2;
 
+  renderYoY(ss);
   renderCards();
+}
+
+/* ---------- tabla A: resumen interanual ---------- */
+function renderYoY(ss){
+  var T = {t:totalOf(ss,"t"), d:totalOf(ss,"d"), neto:totalOf(ss,"neto"),
+           com:totalOf(ss,"com"), ide:totalOf(ss,"ide"), perc:totalOf(ss,"perc")};
+  var rows = [
+    {l:"Tickets",                     a:T.t,    f:num},
+    {l:"Días de visita",              a:T.d,    f:num},
+    {l:"Netos de comisiones",         a:T.neto, f:moneyM, hi:true},
+    {l:"Comisiones a Tercerizadoras", a:T.com,  f:moneyM},
+    {l:"Ingreso percibido",           a:T.perc, f:moneyM},
+    {l:"Ingresos teóricos",           a:T.ide,  f:moneyM}
+  ];
+  var h = '<table class="yoy"><thead><tr><th class="lbl">Concepto</th>';
+  CYCS.forEach(function(c,i){ h += '<th>Año '+(i+1)+'<span>'+cycLabel(c)+'</span></th>'; });
+  for(var i=1;i<CYCS.length;i++) h += '<th class="v">A'+(i+1)+'/A'+i+'</th>';
+  h += '</tr></thead><tbody>';
+  rows.forEach(function(r){
+    var v = CYCS.map(function(_,i){ return sumCyc(r.a,i); });
+    h += '<tr'+(r.hi?' class="hi"':'')+'><td class="lbl">'+r.l+'</td>';
+    v.forEach(function(x){ h += '<td>'+r.f(x)+'</td>'; });
+    for(var i=1;i<v.length;i++) h += varCell(v[i], v[i-1], false).replace("<td","<td");
+    h += '</tr>';
+  });
+  /* ratios */
+  var rt = [
+    {l:"Neto / teórico", num:T.neto, den:T.ide},
+    {l:"Comisión / percibido", num:T.com, den:T.perc}
+  ];
+  rt.forEach(function(r){
+    var v = CYCS.map(function(_,i){ var d=sumCyc(r.den,i); return d ? sumCyc(r.num,i)/d : null; });
+    h += '<tr class="ratio"><td class="lbl">'+r.l+'</td>';
+    v.forEach(function(x){ h += '<td>'+(x===null?"—":nf1.format(x*100)+"%")+'</td>'; });
+    for(var i=1;i<v.length;i++) h += ppCell(v[i], v[i-1]);
+    h += '</tr>';
+  });
+  h += '</tbody></table>';
+  document.getElementById("yoy").innerHTML = h;
+  document.getElementById("yoynote").textContent =
+    (S.dep===ALL ? "Once dependencias" : S.dep) + " · " +
+    actives().map(function(c){ return c.short.toLowerCase(); }).join(" + ") +
+    ". Las variaciones de los importes son nominales: comparalas contra las de tickets y días, y contra los dos ratios del pie, que sí son comparables entre años.";
+  renderYoYDeps();
+}
+
+/* ---------- tabla B: interanual por dependencia ---------- */
+function renderYoYDeps(){
+  var key = MK[S.metric], money = S.metric>=2;
+  var rows = DEPS.map(function(d){
+    var ss = series(d);
+    var vals = CYCS.map(function(_,i){ return sumCyc(totalOf(ss,key), i); });
+    var tick = CYCS.map(function(_,i){ return sumCyc(totalOf(ss,"t"), i); });
+    return {dep:d, v:vals, tk:tick, tot:vals.reduce(function(x,y){return x+y;},0)};
+  }).sort(function(x,y){ return y.tot-x.tot; });
+
+  var h = '<table class="yoy deps"><thead><tr><th class="lbl">Dependencia</th>';
+  CYCS.forEach(function(c,i){ h += '<th>Año '+(i+1)+'<span>'+cycLabel(c)+'</span></th>'; });
+  for(var i=1;i<CYCS.length;i++) h += '<th class="v">A'+(i+1)+'/A'+i+'</th>';
+  h += '</tr></thead><tbody>';
+  rows.forEach(function(r){
+    h += '<tr><td class="lbl">'+esc(r.dep)+'</td>';
+    r.v.forEach(function(x){ h += '<td>'+(money?moneyM(x):num(x))+'</td>'; });
+    for(var i=1;i<r.v.length;i++) h += varCell(r.v[i], r.v[i-1], r.tk[i-1] < 1000 || r.tk[i-1] < 0.1*r.tk[i]);
+    h += '</tr>';
+  });
+  h += '</tbody></table>';
+  document.getElementById("yoydeps").innerHTML = h;
 }
 
 /* ---------- tarjetas ---------- */
@@ -794,7 +929,7 @@ document.querySelectorAll("#metric button").forEach(function(b){
   b.addEventListener("click", function(){
     S.metric = +b.getAttribute("data-m");
     document.querySelectorAll("#metric button").forEach(function(x){ x.setAttribute("aria-pressed", x===b); });
-    renderCards();
+    renderCards(); renderYoYDeps();
   });
 });
 
