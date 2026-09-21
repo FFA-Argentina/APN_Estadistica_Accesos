@@ -11,7 +11,7 @@ Período: **septiembre 2023 a agosto 2026** · 11 dependencias. La comparación 
 - **Comisiones a Tercerizadoras**: la porción del cobro que retienen los agentes de venta. Netos + comisiones = ingreso percibido.
 - **Ingresos teóricos**: los días de visita valuados a la tarifa filtro de residente nacional de un día vigente en cada dependencia y período.
 
-Controles: selector de dependencia; categorías de visitante (residentes, no residentes, vehículos y adicionales) combinables y acumulables; series de ingresos seleccionables; modo *acumuladas* o *superpuestas*; tarjetas por dependencia con la métrica elegida; y descarga del CSV de la vista activa.
+Controles: selector de dependencia; filtro de período anual (sep 23–ago 24, sep 24–ago 25, sep 25–ago 26 o el trienio completo; al abrir muestra el último ciclo, y cada indicador y tarjeta agrega en una línea inferior el total del trienio); categorías de visitante (residentes, no residentes, vehículos y adicionales) combinables y acumulables; series de ingresos seleccionables; modo *acumuladas* o *superpuestas*; tarjetas por dependencia con la métrica elegida; y descarga del CSV de la vista activa.
 
 Las líneas verticales punteadas marcan los cambios de tarifa filtro (P2 a P6).
 

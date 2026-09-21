@@ -117,6 +117,12 @@
   .kpi .split div{font-size:11.5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline;
     font-variant-numeric:tabular-nums}
   .kpi .split .nm{display:flex;align-items:center;gap:6px;color:var(--muted);font-weight:500}
+  .kpi .tri{margin-top:9px;padding-top:7px;border-top:1px dashed var(--line);display:flex;justify-content:space-between;
+    gap:8px;align-items:baseline;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .kpi .tri b{color:var(--ink);font-weight:600}
+  .card .tri{font-size:10.5px;color:var(--muted);margin-top:5px;padding-top:4px;border-top:1px dashed var(--line);
+    display:flex;justify-content:space-between;gap:6px;font-variant-numeric:tabular-nums}
+  .card .tri b{color:var(--ink);font-weight:600}
   .swatch{width:10px;height:10px;border-radius:2px;flex:0 0 10px;display:inline-block}
 
   /* ---------- paneles ---------- */
@@ -247,7 +253,7 @@
     <div class="head-body">
       <div class="eyebrow">Administración de Parques Nacionales<br><span>Dirección Nacional de Uso Público · Dirección de Concesiones</span></div>
       <h1>Evolución mensual de accesos <em>por dependencia · septiembre 2023 a agosto 2026</em></h1>
-      <p class="sub">Tickets, días de visita e ingresos netos de comisiones —lo que efectivamente queda para la administración— frente a los ingresos teóricos calculados con la tarifa filtro de residente nacional de un día, y las comisiones retenidas por las tercerizadoras. Elegí una dependencia, combiná las categorías y desplazá el cursor sobre los gráficos para ver el detalle mensual.</p>
+      <p class="sub">Tickets, días de visita e ingresos netos de comisiones —lo que efectivamente queda para la administración— frente a los ingresos teóricos calculados con la tarifa filtro de residente nacional de un día, y las comisiones retenidas por las tercerizadoras. Elegí una dependencia y un período anual, combiná las categorías y desplazá el cursor sobre los gráficos para ver el detalle mensual.</p>
     </div>
   </header>
 
@@ -255,6 +261,10 @@
     <div class="ctl">
       <label for="dep">Dependencia</label>
       <select id="dep"></select>
+    </div>
+    <div class="ctl">
+      <label id="perlbl">Período</label>
+      <div class="seg" role="group" aria-labelledby="perlbl" id="per"></div>
     </div>
     <div class="ctl">
       <label id="catslbl">Categorías <span class="hint">(sumá o quitá las que quieras)</span></label>
@@ -328,7 +338,7 @@
   <div class="gridhead">
     <div>
       <h2>Todas las dependencias</h2>
-      <p>El número es el total del período; cada línea usa su propia escala para que se vea la forma de la serie. Tocá una tarjeta para llevarla a los gráficos de arriba.</p>
+      <p>El número es el total del período elegido y, debajo, el del trienio; cada línea usa su propia escala para que se vea la forma de la serie. Tocá una tarjeta para llevarla a los gráficos de arriba.</p>
     </div>
     <div class="ctl">
       <label id="mlbl">Métrica de las tarjetas</label>
@@ -374,7 +384,7 @@ window.__DATA__ = {"meses":["2023-09","2023-10","2023-11","2023-12","2024-01","2
 (function(){
 "use strict";
 var D = window.__DATA__;
-var MESES = D.meses, DEPS = D.deps, N = MESES.length;
+var MESES = D.meses, DEPS = D.deps, NF = MESES.length, N = NF, OFF = 0;
 var ALL = "__ALL__";
 var MN = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 
@@ -417,20 +427,20 @@ var S = { dep: ALL, cats: {RP:true, NR:true, NP:true}, vals:{neto:true, com:true
 function activeVals(){ return VALS.filter(function(v){ return S.vals[v.k]; }); }
 
 /* ---------- datos ---------- */
-function zeros(){ var a=new Array(N); for(var i=0;i<N;i++)a[i]=0; return a; }
+function zeros(n){ n = n||N; var a=new Array(n); for(var i=0;i<n;i++)a[i]=0; return a; }
 function grab(dep, seg, mi){
   if(dep === ALL){
-    var out = zeros();
+    var out = zeros(NF);
     for(var k=0;k<DEPS.length;k++){
       var s = D.data[DEPS[k]][seg][mi];
-      for(var i=0;i<N;i++) out[i]+=s[i];
+      for(var i=0;i<NF;i++) out[i]+=s[i];
     }
     return out;
   }
   return D.data[dep][seg][mi].slice();
 }
-function sum(a){ var t=0; for(var i=0;i<N;i++)t+=a[i]; return t; }
-function addTo(acc,b){ for(var i=0;i<N;i++) acc[i]+=b[i]; return acc; }
+function sum(a){ var t=0; for(var i=0;i<a.length;i++)t+=a[i]; return t; }
+function addTo(acc,b){ for(var i=0;i<acc.length;i++) acc[i]+=b[i]; return acc; }
 function actives(){ return CATS.filter(function(c){ return S.cats[c.k]; }); }
 
 /* ---------- ciclos sep–ago (sólo ciclos completos de 12 meses) ---------- */
@@ -440,7 +450,15 @@ var CYCS = CYC.filter(function(v,i,arr){
   return arr.filter(function(x){ return x===v; }).length===12;
 }).sort(function(x,y){ return x-y; });
 function cycLabel(c){ return "sep "+String(c).slice(2)+"–ago "+String(c+1).slice(2); }
-function sumCyc(arr, ci){ var t=0; for(var i=0;i<N;i++) if(CYC[i]===CYCS[ci]) t+=arr[i]; return t; }
+function sumCyc(arr, ci){ var t=0; for(var i=0;i<NF;i++) if(CYC[i]===CYCS[ci]) t+=arr[i]; return t; }
+function sumTri(arr){ var t=0; for(var ci=0;ci<CYCS.length;ci++) t+=sumCyc(arr,ci); return t; }
+function triLabel(){ return "Trienio sep "+String(CYCS[0]).slice(2)+"–ago "+String(CYCS[CYCS.length-1]+1).slice(2); }
+function perLabel(){ return S.cyc<0 ? triLabel().replace("Trienio","trienio") : cycLabel(CYCS[S.cyc]); }
+/* ventana visible: un ciclo de 12 meses o el trienio */
+function setWindow(){
+  if(S.cyc<0){ OFF = CYC.indexOf(CYCS[0]); N = 12*CYCS.length; }
+  else { OFF = CYC.indexOf(CYCS[S.cyc]); N = 12; }
+}
 function guardOf(tk, i){ return tk[i-1] < 0.1*tk[i]; }
 function varCell(cur, base, guard){
   if(!base) return '<td class="v na">—</td>';
@@ -454,18 +472,19 @@ function ppCell(cur, base, guard){
   var d = (cur-base)*100;
   return '<td class="v '+(d<0?"neg":"pos")+'">'+(d>0?"+":"−")+nf1.format(Math.abs(d))+" pp</td>";
 }
-function series(dep){
+function series(dep, full){
+  var g = function(k,mi){ var a = grab(dep,k,mi); return full ? a : a.slice(OFF, OFF+N); };
   return actives().map(function(c){
     var o = {k:c.k, label:c.label, short:c.short, color:c.color,
-            t:grab(dep,c.k,0), d:grab(dep,c.k,1), neto:grab(dep,c.k,2),
-            com:grab(dep,c.k,3), ide:grab(dep,c.k,4)};
+            t:g(c.k,0), d:g(c.k,1), neto:g(c.k,2),
+            com:g(c.k,3), ide:g(c.k,4)};
     o.perc = o.neto.map(function(v,i){ return v + o.com[i]; });
     return o;
   });
 }
-function totalOf(ss, key){ var acc = zeros(); ss.forEach(function(s){ addTo(acc, s[key]); }); return acc; }
+function totalOf(ss, key){ var acc = zeros(ss.length ? ss[0].t.length : N); ss.forEach(function(s){ addTo(acc, s[key]); }); return acc; }
 function stackTops(ss, key){
-  var run = zeros(), tops = [];
+  var run = zeros(ss.length ? ss[0].t.length : N), tops = [];
   ss.forEach(function(s){ run = addTo(run.slice(), s[key]); tops.push(run.slice()); });
   return tops;
 }
@@ -506,7 +525,7 @@ function drawChart(box, cfg){
     o.push('<text x="'+(m.l-8)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end" font-family="Archivo, system-ui, sans-serif" font-size="10" fill="#6E6B5E">'+cfg.yfmt(v)+'</text>');
   }
   CUTS.forEach(function(c){
-    var x = X(dateToX(c.d));
+    var x = X(dateToX(c.d) - OFF);
     if(x<m.l||x>W-m.r) return;
     o.push('<line x1="'+x.toFixed(1)+'" y1="'+(m.t-2)+'" x2="'+x.toFixed(1)+'" y2="'+(m.t+ih)+'" stroke="#C8801F" stroke-width="1" stroke-dasharray="1 4" opacity=".85"/>');
     o.push('<text x="'+(x+3).toFixed(1)+'" y="'+(m.t+7)+'" font-family="Archivo, system-ui, sans-serif" font-size="9" fill="#C8801F" font-weight="600">'+c.l+'</text>');
@@ -529,8 +548,8 @@ function drawChart(box, cfg){
   });
   var step = Math.max(1, Math.ceil(N/(iw/52))), lastY = "";
   for(var i=0;i<N;i+=step){
-    var yy = MESES[i].slice(0,4), showY = yy!==lastY; lastY = yy;
-    o.push('<text x="'+X(i).toFixed(1)+'" y="'+(H-12)+'" text-anchor="middle" font-family="Archivo, system-ui, sans-serif" font-size="9.5" fill="'+(showY?INK:"#6E6B5E")+'" font-weight="'+(showY?600:400)+'">'+mesLabel(i, showY)+'</text>');
+    var yy = MESES[OFF+i].slice(0,4), showY = yy!==lastY; lastY = yy;
+    o.push('<text x="'+X(i).toFixed(1)+'" y="'+(H-12)+'" text-anchor="middle" font-family="Archivo, system-ui, sans-serif" font-size="9.5" fill="'+(showY?INK:"#6E6B5E")+'" font-weight="'+(showY?600:400)+'">'+mesLabel(OFF+i, showY)+'</text>');
   }
   o.push('<g id="cross'+uid+'" style="display:none"><line y1="'+m.t+'" y2="'+(m.t+ih)+'" stroke="#22271F" stroke-width="1" opacity=".45"/><g class="dots"></g></g>');
   o.push('<rect x="'+m.l+'" y="'+m.t+'" width="'+iw+'" height="'+ih+'" fill="transparent"/>');
@@ -549,7 +568,7 @@ function drawChart(box, cfg){
     var x = X(i);
     cross.style.display="";
     cross.querySelector("line").setAttribute("x1",x); cross.querySelector("line").setAttribute("x2",x);
-    var dh="", html='<b>'+mesLong(i)+'</b>';
+    var dh="", html='<b>'+mesLong(OFF+i)+'</b>';
     (cfg.dotsOn||cfg.lines||[]).forEach(function(l){
       dh += '<circle cx="'+x.toFixed(1)+'" cy="'+Y(l.v[i]).toFixed(1)+'" r="3.2" fill="#EDE7DA" stroke="'+l.color+'" stroke-width="2"/>';
     });
@@ -620,7 +639,7 @@ function render(){
   document.getElementById("scopenote").textContent =
     (single ? "Una sola categoría: " + names + "."
             : (stacked ? "Categorías acumuladas: " + names + "." : "Categorías superpuestas: " + names + ".")) +
-    eq + " · " + (S.dep===ALL ? "Once dependencias sumadas." : S.dep + ".");
+    eq + " · " + (S.dep===ALL ? "Once dependencias sumadas." : S.dep + ".") + " · Período: " + perLabel() + ".";
 
   var defs = [
     {k:"t",   t:"Tickets",        u:"",           f:num},
@@ -629,6 +648,8 @@ function render(){
     {k:"com", t:"Comisiones a Tercerizadoras",  u:"millones $", f:function(v){return num(v/1e6);}},
     {k:"ide", t:"Ingresos teóricos",  u:"millones $", f:function(v){return num(v/1e6);}}
   ];
+  var FS = series(S.dep, true), showTri = S.cyc>=0;
+  var TF = {t:totalOf(FS,"t"), d:totalOf(FS,"d"), neto:totalOf(FS,"neto"), com:totalOf(FS,"com"), ide:totalOf(FS,"ide")};
   var kh = "";
   defs.forEach(function(d){
     kh += '<div class="kpi'+(d.hi?" hi":"")+'"><h3>'+d.t+'</h3><div class="big">'+d.f(sum(T[d.k]))+(d.u?'<span class="unit">'+d.u+'</span>':'')+'</div>';
@@ -642,6 +663,7 @@ function render(){
       });
       kh += '</div>';
     }
+    if(showTri) kh += '<div class="tri"><span>'+triLabel()+'</span><b>'+d.f(sumTri(TF[d.k]))+(d.u?' <span class="unit">'+d.u+'</span>':'')+'</b></div>';
     kh += '</div>';
   });
   var Rn = sum(T.neto), I = sum(T.ide), br = Rn-I;
@@ -650,7 +672,10 @@ function render(){
         (single?"":ss.map(function(s){
           var si=sum(s.ide);
           return '<div><span class="nm"><i class="swatch" style="background:'+s.color+'"></i>'+s.short+'</span><span>'+(si?pct((sum(s.neto)-si)/si):"—")+'</span></div>';
-        }).join("")) + '</div></div>';
+        }).join("")) + '</div>' +
+        (showTri ? (function(){ var tn=sumTri(TF.neto), ti=sumTri(TF.ide), tb=tn-ti;
+           return '<div class="tri"><span>'+triLabel()+'</span><b>'+(tb<0?"−":"+")+num(Math.abs(tb)/1e6)+' <span class="unit">millones $</span> · '+(ti?pct(tb/ti):"—")+'</b></div>'; })() : '') +
+        '</div>';
   document.getElementById("kpis").innerHTML = kh;
 
   /* chart 1 */
@@ -757,7 +782,7 @@ function render(){
   });
   document.getElementById("leg2").innerHTML = leg2;
 
-  renderYoY(ss);
+  renderYoY(series(S.dep, true));
   renderCards();
 }
 
@@ -810,7 +835,7 @@ function renderYoY(ss){
 function renderYoYDeps(){
   var key = MK[S.metric], money = S.metric>=2;
   var rows = DEPS.map(function(d){
-    var ss = series(d);
+    var ss = series(d, true);
     var vals = CYCS.map(function(_,i){ return sumCyc(totalOf(ss,key), i); });
     var tick = CYCS.map(function(_,i){ return sumCyc(totalOf(ss,"t"), i); });
     return {dep:d, v:vals, tk:tick, tot:vals.reduce(function(x,y){return x+y;},0)};
@@ -838,7 +863,8 @@ function renderCards(){
   var stacked = S.mode==="stack" && acts>1;
   var rows = DEPS.map(function(d){
     var ss = series(d);
-    return { dep:d, ss:ss, tot: ss.reduce(function(a,s){ return a+sum(s[key]); },0) };
+    return { dep:d, ss:ss, tot: ss.reduce(function(a,s){ return a+sum(s[key]); },0),
+             tri: sumTri(totalOf(series(d, true), key)) };
   }).sort(function(a,b){ return b.tot-a.tot; });
   var grand = rows.reduce(function(a,r){return a+r.tot;},0) || 1;
 
@@ -870,7 +896,8 @@ function renderCards(){
     return '<button class="card'+(r.tot?'':' empty')+'" data-dep="'+esc(r.dep)+'" aria-pressed="'+(S.dep===r.dep)+'">'+
            '<div class="nm">'+esc(r.dep)+'</div>'+
            '<div class="val">'+(money?moneyM(r.tot):num(r.tot))+'</div>'+
-           '<div class="sh">'+nf1.format(r.tot/grand*100)+'% del total</div>'+ sp +'</button>';
+           '<div class="sh">'+nf1.format(r.tot/grand*100)+'% del total</div>'+ sp +
+           (S.cyc>=0 ? '<div class="tri"><span>'+triLabel()+'</span><b>'+(money?moneyM(r.tri):num(r.tri))+'</b></div>' : '')+'</button>';
   }).join("");
   var box = document.getElementById("cards");
   box.innerHTML = h;
@@ -949,14 +976,14 @@ document.getElementById("csv").addEventListener("click", function(){
   var dep = (S.dep===ALL?"Todas":S.dep);
   for(var i=0;i<N;i++){
     ss.forEach(function(s){
-      lines.push([MESES[i], dep, s.short, s.t[i], s.d[i], s.neto[i], s.com[i], s.perc[i], s.ide[i], s.neto[i]-s.ide[i]].join(";"));
+      lines.push([MESES[OFF+i], dep, s.short, s.t[i], s.d[i], s.neto[i], s.com[i], s.perc[i], s.ide[i], s.neto[i]-s.ide[i]].join(";"));
     });
-    if(ss.length>1) lines.push([MESES[i], dep, "Total seleccionado", T.t[i], T.d[i], T.neto[i], T.com[i], T.perc[i], T.ide[i], T.neto[i]-T.ide[i]].join(";"));
+    if(ss.length>1) lines.push([MESES[OFF+i], dep, "Total seleccionado", T.t[i], T.d[i], T.neto[i], T.com[i], T.perc[i], T.ide[i], T.neto[i]-T.ide[i]].join(";"));
   }
   var blob = new Blob(["\ufeff"+lines.join("\n")], {type:"text/csv;charset=utf-8"});
   var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "accesos_"+(S.dep===ALL?"todas":S.dep.replace(/[^\wáéíóúñ]+/gi,"_"))+"_"+actives().map(function(c){return c.k;}).join("-")+".csv";
+  a.download = "accesos_"+(S.dep===ALL?"todas":S.dep.replace(/[^\wáéíóúñ]+/gi,"_"))+"_"+(S.cyc<0?"trienio":String(CYCS[S.cyc])+"-"+String(CYCS[S.cyc]+1))+"_"+actives().map(function(c){return c.k;}).join("-")+".csv";
   a.click(); URL.revokeObjectURL(a.href);
 });
 
@@ -971,6 +998,16 @@ function onResize(){
 }
 window.addEventListener("resize", onResize);
 window.addEventListener("orientationchange", function(){ lastW = -1; onResize(); });
+/* período anual: por defecto el último ciclo completo */
+S.cyc = CYCS.length-1;
+var perBox = document.getElementById("per");
+perBox.innerHTML = CYCS.map(function(c,i){ return '<button data-cyc="'+i+'">'+cycLabel(c)+'</button>'; }).join("") +
+  '<button data-cyc="-1">Trienio</button>';
+function syncPer(){ perBox.querySelectorAll("button").forEach(function(b){ b.setAttribute("aria-pressed", +b.getAttribute("data-cyc")===S.cyc); }); }
+perBox.querySelectorAll("button").forEach(function(b){
+  b.addEventListener("click", function(){ S.cyc = +b.getAttribute("data-cyc"); setWindow(); syncPer(); render(); });
+});
+setWindow(); syncPer();
 syncControls();
 render();
 })();
