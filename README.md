@@ -6,12 +6,12 @@ Período: **septiembre 2023 a agosto 2026** · 11 dependencias. La comparación 
 
 ## Qué muestra
 
-- **Tickets** emitidos y **días de visita** habilitados (cada ticket multiplicado por los días que da derecho a ingresar).
+- **Tickets** emitidos y **días de derecho de visita**: la cantidad de días de visita habilitados por el ticket adquirido (7 días los permisos semanales; 365 días los permisos de temporada y el pasaporte anual APN), imputados al mes de venta.
 - **Ingresos netos de comisiones**: el monto que efectivamente queda para la administración. Es el indicador principal del tablero.
 - **Comisiones a Tercerizadoras**: la porción del cobro que retienen los agentes de venta. Netos + comisiones = ingreso percibido.
 - **Ingresos teóricos**: los días de visita valuados a la tarifa filtro de residente nacional de un día vigente en cada dependencia y período.
 
-Controles: selector de dependencia; filtro de período anual (sep 23–ago 24, sep 24–ago 25, sep 25–ago 26 o el trienio completo; al abrir muestra el último ciclo, y cada indicador y tarjeta agrega en una línea inferior el total del trienio); categorías de visitante (residentes, no residentes, vehículos y adicionales) combinables y acumulables; series de ingresos seleccionables; modo *acumuladas* o *superpuestas*; tarjetas por dependencia con la métrica elegida; y descarga del CSV de la vista activa.
+Controles: selector de dependencia; selector de importes a pesos constantes (CER, por defecto) o corrientes; filtro de período anual (sep 23–ago 24, sep 24–ago 25, sep 25–ago 26 o el trienio completo; al abrir muestra el último ciclo, y cada indicador y tarjeta agrega en una línea inferior el total del trienio); categorías de visitante (residentes, no residentes, vehículos y adicionales) combinables y acumulables; series de ingresos seleccionables; modo *acumuladas* o *superpuestas*; tarjetas por dependencia con la métrica elegida; y descarga del CSV de la vista activa.
 
 Las líneas verticales punteadas marcan los cambios de tarifa filtro (P2 a P6).
 
@@ -53,3 +53,7 @@ El archivo funciona igual abierto localmente con doble clic, sin servidor.
 ## Fuente
 
 Elaboración propia con información disponible en ReNaRI.
+
+## Pesos constantes e informe
+
+Los importes a pesos constantes surgen de las columnas CER del archivo de datos (cada importe diario dividido por el CER del día, serie diaria del BCRA, base 2/2/2002 = 1); los ingresos teóricos se ajustan con el mismo factor. El botón «Ver informe PDF» abre `informe/Informe_Accesos_trienal_ago26.pdf`, incluido en este paquete.
